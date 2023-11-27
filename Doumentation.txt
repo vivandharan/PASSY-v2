@@ -1,0 +1,46 @@
+"""
+Password Manager Application
+Author: [Your Name]
+Date: [Date]
+
+This application allows users to manage password records in a MySQL database.
+Users can add, view, update, and delete password records.
+
+Required Libraries:
+- tkinter: Used for creating the graphical user interface (GUI).
+- mysql.connector: Used to connect to a MySQL database.
+- messagebox: Used to display messages to the user.
+
+MySQL Database Configuration:
+- Make sure you have a MySQL database named "password_manager."
+- Modify the database connection parameters in the code to match your setup.
+
+Usage:
+- Run this script using Python.
+- Use the GUI to interact with the password manager application.
+
+Functions:
+1. submit(): Inserts a new password record into the database.
+2. query(): Retrieves and displays all records in the database.
+3. delete(): Deletes a record based on the provided ID.
+4. update(): Prepares an edit window for updating a record.
+5. change(): Updates a record with new information.
+6. hide(): Clears the displayed records.
+
+Widgets:
+- Entry widgets: For entering data (Application Name, URL, Email, Password, ID for delete/update).
+- Buttons: For performing actions (Add Record, Show Records, Delete Record, Update Record).
+
+Label:
+- Displays records in a specified area of the window.
+
+Main Function:
+- main(): Runs the Tkinter main loop to start the application.
+
+Note:
+- Ensure that you have the required libraries (Tkinter, mysql.connector) installed.
+- Set up your MySQL database and update the database connection parameters.
+- For security reasons, this code does not encrypt or hash the stored passwords. In a real-world application, consider implementing password hashing for enhanced security.
+
+"""
+
