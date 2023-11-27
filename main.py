@@ -5,6 +5,12 @@ except ImportError:  # Python 3
 import mysql.connector
 from tkinter import messagebox
 
+import sys
+from tkinter import *
+from cryptography.fernet import Fernet
+import mysql.connector
+from tkinter import messagebox
+
 # Create a MySQL connection
 conn = mysql.connector.connect(
     host="127.0.0.1",
@@ -13,6 +19,10 @@ conn = mysql.connector.connect(
     database="PASSY"
 )
 cursor = conn.cursor()
+
+# Generate a key for encryption
+key = Fernet.generate_key()
+cipher_suite = Fernet(key)
 
 root = Tk()
 root.title("Password Manager")
@@ -29,19 +39,32 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS manager (
                        app_name VARCHAR(255),
                        url VARCHAR(255),
                        email_id VARCHAR(255),
-                       password VARCHAR(255)
+                       password VARBINARY(255)
                         )
 """)
 
 # Commit changes
 conn.commit()
 
+# Encryption function
+def encrypt_password(password):
+    return cipher_suite.encrypt(password.encode())
+
+# Decryption function
+def decrypt_password(encrypted_password):
+    try:
+        return cipher_suite.decrypt(encrypted_password).decode()
+    except Exception as e:
+        print(f"Error decrypting password: {e}")
+        return "Decryption Error"
+
 # Create submit function for the database
 def submit():
     # Insert into the MySQL table
     if app_name.get() and url.get() and email_id.get() and password.get():
+        encrypted_password = encrypt_password(password.get())
         insert_query = "INSERT INTO manager (app_name, url, email_id, password) VALUES (%s, %s, %s, %s)"
-        data = (app_name.get(), url.get(), email_id.get(), password.get())
+        data = (app_name.get(), url.get(), email_id.get(), encrypted_password)
         cursor.execute(insert_query, data)
         conn.commit()
         # Message box
@@ -63,8 +86,10 @@ def query():
     records = cursor.fetchall()
     p_records = ""
     for record in records:
-        p_records += f"{record[0]} {record[1]} {record[2]} {record[3]} {record[4]}\n"
+        decrypted_password = decrypt_password(record[4])
+        p_records += f"{record[0]} {record[1]} {record[2]} {record[3]} {decrypted_password}\n"
     query_label['text'] = p_records
+
 
 # Create a function to delete a record
 def delete():
@@ -194,4 +219,4 @@ def main():
     root.mainloop()
 
 if __name__ == '__main__':
-    main()
+    root.mainloop()
