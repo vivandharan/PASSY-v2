@@ -1,139 +1,198 @@
-Certainly, let's break down the code in detail:
-figd_VpRoU5A3JAWlKEKDT7TiO35eysmt6yTcYbEzAoLW
-1. **Importing Modules:**
-   ```python
-   try:
-       from tkinter import *
-   except ImportError:  # Python 3
-       from tkinter import *
-   import mysql.connector
-   from tkinter import messagebox
-   import sys
-   from tkinter import *
-   from cryptography.fernet import Fernet
-   import mysql.connector
-   from tkinter import messagebox
-   ```
-   - The code begins by importing necessary modules:
-     - `tkinter`: The GUI toolkit for Python.
-     - `mysql.connector`: A Python driver for MySQL.
-     - `messagebox`: Part of the `tkinter` module, used for displaying message boxes.
-     - `sys`: Provides access to some variables used or maintained by the interpreter.
-     - `cryptography.fernet`: Used for encryption and decryption.
+Certainly! I'll provide a detailed documentation for each part of your code to help you understand its functionality and structure. This documentation can serve as a guide for your high school project.
 
-2. **Creating MySQL Connection:**
-   ```python
-   conn = mysql.connector.connect(
-       host="127.0.0.1",
-       user="root",
-       password="Qwerty772",
-       database="PASSY"
-   )
-   cursor = conn.cursor()
-   ```
-   - A connection to a MySQL database is established using the provided parameters (host, user, password, database).
-   - A cursor is created to execute queries on the database.
+### 1. Import Statements:
 
-3. **Generating Encryption Key:**
-   ```python
-   key = Fernet.generate_key()
-   cipher_suite = Fernet(key)
-   ```
-   - An encryption key is generated using the `Fernet` class from the `cryptography` module.
-   - The key will be used for encrypting and decrypting passwords.
+```python
+# Import necessary modules
+from tkinter import *
+from cryptography.fernet import Fernet
+import mysql.connector
+from tkinter import messagebox
+```
 
-4. **Creating Tkinter Window:**
-   ```python
-   root = Tk()
-   root.title("Password Manager")
-   root.geometry("500x400")
-   root.minsize(600, 400)
-   root.maxsize(600, 400)
-   ```
-   - A Tkinter `Tk` object is created, representing the main window of the application.
-   - Window title, initial geometry, and size constraints are set.
+These statements import required modules for GUI development (`tkinter`), encryption (`cryptography.fernet`), MySQL database interaction (`mysql.connector`), and message boxes for user notifications (`tkinter.messagebox`).
 
-5. **Creating Tkinter Frame:**
-   ```python
-   frame = Frame(root, bg="#80c1ff", bd=5)
-   frame.place(relx=0.50, rely=0.50, relwidth=0.98, relheight=0.45, anchor="n")
-   ```
-   - A Tkinter `Frame` is created within the main window to organize and group UI elements.
-   - It has a background color (`#80c1ff`), border width (`bd`), and is placed using relative coordinates.
+### 2. MySQL Database Connection:
 
-6. **Creating MySQL Table:**
-   ```python
-   cursor.execute("""CREATE TABLE IF NOT EXISTS manager (
-                          id INT AUTO_INCREMENT PRIMARY KEY,
-                          app_name VARCHAR(255),
-                          url VARCHAR(255),
-                          email_id VARCHAR(255),
-                          password VARBINARY(255)
-                       )
-   """)
-   ```
-   - A MySQL table named `manager` is created if it doesn't exist already.
-   - The table has columns for `id`, `app_name`, `url`, `email_id`, and `password`.
+```python
+# Create a MySQL connection
+conn = mysql.connector.connect(
+    host="127.0.0.1",
+    user="root",
+    password="Qwerty772",
+    database="PASSY"
+)
+cursor = conn.cursor()
+```
 
-7. **Committing Database Changes:**
-   ```python
-   conn.commit()
-   ```
-   - Changes made to the database are committed.
+This establishes a connection to a MySQL database named "PASSY" using the specified host, username, and password. The `cursor` object is used to execute SQL queries.
 
-8. **Encryption and Decryption Functions:**
-   ```python
-   def encrypt_password(password):
-       return cipher_suite.encrypt(password.encode())
+### 3. Encryption Setup:
 
-   def decrypt_password(encrypted_password):
-       try:
-           return cipher_suite.decrypt(encrypted_password).decode()
-       except Exception as e:
-           print(f"Error decrypting password: {e}")
-           return "Decryption Error"
-   ```
-   - Functions for encrypting and decrypting passwords using the generated key.
+```python
+# Generate and save a key for encryption
+def generate_key():
+    """Generates a key and saves it into a file."""
+    key = Fernet.generate_key()
+    with open("secret.key", "wb") as key_file:
+        key_file.write(key)
+generate_key()
 
-9. **Submit Function:**
-   ```python
-   def submit():
-       # Insert into the MySQL table
-       if app_name.get() and url.get() and email_id.get() and password.get():
-           encrypted_password = encrypt_password(password.get())
-           insert_query = "INSERT INTO manager (app_name, url, email_id, password) VALUES (%s, %s, %s, %s)"
-           data = (app_name.get(), url.get(), email_id.get(), encrypted_password)
-           cursor.execute(insert_query, data)
-           conn.commit()
-           # Message box
-           messagebox.showinfo("Info", "Record Added in Database!")
+# Load the encryption key from the file
+def load_key():
+    return open("secret.key", "rb").read()
+load_key()
+Key = load_key()
+cipher_suite = Fernet(Key)
+```
 
-           # After data entry, clear the text boxes
-           app_name.delete(0, END)
-           url.delete(0, END)
-           email_id.delete(0, END)
-           password.delete(0, END)
-       else:
-           messagebox.showinfo("Alert", "Please fill all details!")
-   ```
-   - This function is called when the user clicks the "Add Record" button.
-   - It checks if all required fields are filled and then inserts the data into the `manager` table.
-   - After insertion, it displays a message box and clears the input fields.
+These functions generate and load an encryption key using the `cryptography.fernet` library. The key is stored in a file named "secret.key."
 
-10. **Query Function:**
-    ```python
-    def query():
-        query_btn.configure(text="Hide Records", command=hide)
-        # Query the MySQL table
-        cursor.execute("SELECT * FROM manager")
-        records = cursor.fetchall()
-        p_records = ""
-        for record in records:
-            decrypted_password = decrypt_password(record[4])
-            p_records += f"{record[0]} {record[1]} {record[2]} {record[3]} {decrypted_password}\n"
-        query_label['text'] = p_records
-    ```
-    - This function is called when the user clicks the "Show Records" button.
-    - It queries all records from the `manager` table, decrypts passwords, and displays the records in the GUI.
+### 4. Tkinter Setup:
 
-These explanations cover the first part of the code. If you would like more detailed explanations for the rest of the code, please let me know!
+```python
+update_id = Entry()
+root = Tk()
+root.title("PASSY V2")
+```
+
+Creates a Tkinter Entry widget (`update_id`) and the main Tkinter window (`root`) with the title "PASSY V2."
+
+### 5. Update Record Function:
+
+```python
+def update():
+    t = update_id.get()
+    if t:
+        global edit
+        edit = Tk()
+        edit.title("Update Record")
+        edit.geometry("640x500")
+        edit.minsize(450, 300)
+        edit.maxsize(1090, 1080)
+
+        # Global variables
+        global app_name_edit, url_edit, email_id_edit, password_edit
+```
+
+This function is called when the user wants to update a record. It creates a new Tkinter window (`edit`) for the update operation and initializes global variables for the Entry widgets.
+
+### 6. Submit Function:
+
+```python
+def submit():
+    # Insert into the MySQL table
+    if app_name.get() and url.get() and email_id.get() and password.get():
+        encrypted_password = encrypt_password(password.get())
+        insert_query = "INSERT INTO manager (app_name, url, email_id, password) VALUES (%s, %s, %s, %s)"
+        data = (app_name.get(), url.get(), email_id.get(), encrypted_password)
+        cursor.execute(insert_query, data)
+        conn.commit()
+        # Message box
+        messagebox.showinfo("Info","Record Added in PASSY!")
+        query()
+
+        # After data entry, clear the text boxes
+        app_name.delete(0, END)
+        url.delete(0, END)
+        email_id.delete(0, END)
+        password.delete(0, END)
+    else:
+        messagebox.showinfo("Alert","Please fill all details!")
+```
+
+This function is called when the user submits a new record. It validates the input, encrypts the password, inserts the data into the MySQL table, and displays a message box. It then calls the `query` function to update the displayed records.
+
+### 7. Query Function:
+
+```python
+def query():
+    query_btn.configure(text="Hide", command=hide)
+    # Query the MySQL table
+    cursor.execute("SELECT * FROM manager")
+    records = cursor.fetchall()
+    p_records = ""
+    for record in records:
+        decrypted_password = decrypt_password(record[4])
+        p_records += f"{record[0]} {record[1]} {record[2]} {record[3]} {decrypted_password}\n"
+    query_label['text'] = p_records
+```
+
+This function queries the MySQL table and displays the records in a Tkinter label (`query_label`). It also updates the text of the query button to "Hide" and binds the `hide` function to it.
+
+### 8. Delete Record Function:
+
+```python
+def delete():
+    t = delete_id.get()
+    if t:
+        delete_query = "DELETE FROM manager WHERE app_name = %s"
+        data = (t,)
+        cursor.execute(delete_query, data)
+        conn.commit()
+        delete_id.delete(0, END)
+        messagebox.showinfo("Alert","Record {t} Successfully Deleted..")
+        query()
+    else:
+        messagebox.showinfo("Alert","Please enter APP NAME to delete!")
+```
+
+This function deletes a record from the database based on the provided application name (`t`). It then updates the displayed records.
+
+### 9. Update Record Function (inside `update` function):
+
+```python
+# Inside the update function
+# Create a function to save updated records
+def change():
+    if app_name_edit.get() and url_edit.get() and email_id_edit.get() and password_edit.get():
+        encrypted_password = encrypt_password(password.get())
+        update_query = "UPDATE manager SET app_name = %s, url = %s, email_id = %s, password = %s WHERE app_name = %s"
+        data = (app_name_edit.get(), url_edit.get(), email_id_edit.get(), encrypted_password, update_id.get())
+        cursor.execute(update_query, data)
+        conn.commit()
+        messagebox.showinfo("Info", "Record Updated in Database!")
+        update_id.delete(0, END)
+        edit.destroy()
+    else:
+        messagebox.showinfo("Alert", "Please fill all details!")
+```
+
+This function is called when the user wants to save the changes made during the update operation. It validates the input, encrypts the password, updates the record in the database, and displays a message box.
+
+### 10. Hide Records Function:
+
+```python
+# Create a function to hide records
+def hide():
+    query_label['text'] = ""
+    query_btn.configure(text="Show Records", command=query)
+```
+
+This function hides the displayed records by setting the text of `query_label` to an empty string. It also updates the text of the query button to "Show Records" and binds the `query` function to it.
+
+### 11. Tkinter UI Elements:
+
+```python
+# Create text boxes and labels...
+# Create submit, query, delete, and update buttons...
+# Create a label to show responses...
+```
+
+These sections create Entry widgets, labels, and buttons for user interaction in the Tkinter window.
+
+### 12. Main Function and Execution:
+
+```python
+def main():
+    root.mainloop()
+
+if __name__ == '__main__':
+    main()
+```
+
+This section defines the `main` function and checks whether the script is being run as the main program. If so, it calls the `main` function, starting the Tkinter main event loop.
+
+This detailed documentation should provide you with insights into the functionality of each part of your code. If you have specific
+
+ questions about certain sections or if there are aspects you'd like further clarification on, feel free to ask!
