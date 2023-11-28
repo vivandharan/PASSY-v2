@@ -1,11 +1,3 @@
-try:
-    from tkinter import *
-except ImportError:  # Python 3
-    from tkinter import *
-import mysql.connector
-from tkinter import messagebox
-
-import sys
 from tkinter import *
 from cryptography.fernet import Fernet
 import mysql.connector
