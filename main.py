@@ -12,13 +12,39 @@ conn = mysql.connector.connect(
 )
 cursor = conn.cursor()
 
-# Generate a key for encryption
-key = Fernet.generate_key()
-cipher_suite = Fernet(key)
+def generate_key():
+    """Generates a key and save it into a file
+    """
+    key = Fernet.generate_key()
+    with open("secret.key", "wb") as key_file:
+        key_file.write(key)
+generate_key()
 
+#Loading Key for Encryption
+def load_key():
+    return open("secret.key", "rb").read()
+load_key()
+Key = load_key()
+cipher_suite = Fernet(Key)
+
+update_id = Entry()
 root = Tk()
-root.title("Password Manager")
-root.geometry("500x400")
+root.title("PASSY V2")
+
+def update():
+    t = update_id.get()
+    if t:
+        global edit
+        edit = Tk()
+        edit.title("Update Record")
+        edit.geometry("640x500")
+        edit.minsize(450, 300)
+        edit.maxsize(1090,1080)
+
+        # Global variables
+        global app_name_edit, url_edit, email_id_edit, password_edit
+
+root.geometry("640x500")
 root.minsize(600, 400)
 root.maxsize(600, 400)
 
@@ -31,7 +57,7 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS manager (
                        app_name VARCHAR(255),
                        url VARCHAR(255),
                        email_id VARCHAR(255),
-                       password VARBINARY(255)
+                       password VARCHAR(255)
                         )
 """)
 
@@ -48,7 +74,7 @@ def decrypt_password(encrypted_password):
         return cipher_suite.decrypt(encrypted_password).decode()
     except Exception as e:
         print(f"Error decrypting password: {e}")
-        return "Decryption Error"
+        return "."
 
 # Create submit function for the database
 def submit():
@@ -60,7 +86,8 @@ def submit():
         cursor.execute(insert_query, data)
         conn.commit()
         # Message box
-        messagebox.showinfo("Info", "Record Added in Database!")
+        messagebox.showinfo("Info","Record Added in PASSY!")
+        query()
 
         # After data entry, clear the text boxes
         app_name.delete(0, END)
@@ -68,11 +95,11 @@ def submit():
         email_id.delete(0, END)
         password.delete(0, END)
     else:
-        messagebox.showinfo("Alert", "Please fill all details!")
+        messagebox.showinfo("Alert","Please fill all details!")
 
 # Create a query function
 def query():
-    query_btn.configure(text="Hide Records", command=hide)
+    query_btn.configure(text="Hide", command=hide)
     # Query the MySQL table
     cursor.execute("SELECT * FROM manager")
     records = cursor.fetchall()
@@ -87,14 +114,15 @@ def query():
 def delete():
     t = delete_id.get()
     if t:
-        delete_query = "DELETE FROM manager WHERE id = %s"
+        delete_query = "DELETE FROM manager WHERE app_name = %s"
         data = (t,)
         cursor.execute(delete_query, data)
         conn.commit()
         delete_id.delete(0, END)
-        messagebox.showinfo("Alert", f"Record {t} Deleted")
+        messagebox.showinfo("Alert","Record {t} Successfully Deleted..")
+        query()
     else:
-        messagebox.showinfo("Alert", "Please enter record ID to delete!")
+        messagebox.showinfo("Alert","Please enter APP NAME to delete!")
 
 # Create a function to update a record
 def update():
@@ -112,13 +140,13 @@ def update():
 
         # Create text boxes
         app_name_edit = Entry(edit, width=30)
-        app_name_edit.grid(row=0, column=1, padx=20)
+        app_name_edit.grid(row=0, column=1, padx=40)
         url_edit = Entry(edit, width=30)
-        url_edit.grid(row=1, column=1, padx=20)
+        url_edit.grid(row=1, column=1, padx=40)
         email_id_edit = Entry(edit, width=30)
-        email_id_edit.grid(row=2, column=1, padx=20)
+        email_id_edit.grid(row=2, column=1, padx=40)
         password_edit = Entry(edit, width=30)
-        password_edit.grid(row=3, column=1, padx=20)
+        password_edit.grid(row=3, column=1, padx=40)
 
         # Create text box labels
         app_name_label_edit = Label(edit, text="Application Name:")
@@ -135,21 +163,22 @@ def update():
         submit_btn_edit.grid(row=4, column=0, columnspan=2, pady=5, padx=15, ipadx=135)
 
         # Query the MySQL table
-        select_query = "SELECT * FROM manager WHERE id = %s"
+        select_query = "SELECT * FROM manager WHERE app_name = %s"
         data = (t,)
         cursor.execute(select_query, data)
         record = cursor.fetchone()
-
         app_name_edit.insert(0, record[1])
         url_edit.insert(0, record[2])
         email_id_edit.insert(0, record[3])
-        password_edit.insert(0, record[4])
+        decrypted_password = decrypt_password(record[4])
+        password_edit.insert(0, decrypted_password)
 
 # Create a function to save updated records
 def change():
     if app_name_edit.get() and url_edit.get() and email_id_edit.get() and password_edit.get():
-        update_query = "UPDATE manager SET app_name = %s, url = %s, email_id = %s, password = %s WHERE id = %s"
-        data = (app_name_edit.get(), url_edit.get(), email_id_edit.get(), password_edit.get(), update_id.get())
+        encrypted_password = encrypt_password(password.get())
+        update_query = "UPDATE manager SET app_name = %s, url = %s, email_id = %s, password = %s WHERE app_name = %s"
+        data = (app_name_edit.get(), url_edit.get(), email_id_edit.get(), encrypted_password, update_id.get())
         cursor.execute(update_query, data)
         conn.commit()
         messagebox.showinfo("Info", "Record Updated in Database!")
