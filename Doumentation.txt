@@ -1,46 +1,139 @@
-"""
-Password Manager Application
-Author: [Your Name]
-Date: [Date]
+Certainly, let's break down the code in detail:
 
-This application allows users to manage password records in a MySQL database.
-Users can add, view, update, and delete password records.
+1. **Importing Modules:**
+   ```python
+   try:
+       from tkinter import *
+   except ImportError:  # Python 3
+       from tkinter import *
+   import mysql.connector
+   from tkinter import messagebox
+   import sys
+   from tkinter import *
+   from cryptography.fernet import Fernet
+   import mysql.connector
+   from tkinter import messagebox
+   ```
+   - The code begins by importing necessary modules:
+     - `tkinter`: The GUI toolkit for Python.
+     - `mysql.connector`: A Python driver for MySQL.
+     - `messagebox`: Part of the `tkinter` module, used for displaying message boxes.
+     - `sys`: Provides access to some variables used or maintained by the interpreter.
+     - `cryptography.fernet`: Used for encryption and decryption.
 
-Required Libraries:
-- tkinter: Used for creating the graphical user interface (GUI).
-- mysql.connector: Used to connect to a MySQL database.
-- messagebox: Used to display messages to the user.
+2. **Creating MySQL Connection:**
+   ```python
+   conn = mysql.connector.connect(
+       host="127.0.0.1",
+       user="root",
+       password="Qwerty772",
+       database="PASSY"
+   )
+   cursor = conn.cursor()
+   ```
+   - A connection to a MySQL database is established using the provided parameters (host, user, password, database).
+   - A cursor is created to execute queries on the database.
 
-MySQL Database Configuration:
-- Make sure you have a MySQL database named "password_manager."
-- Modify the database connection parameters in the code to match your setup.
+3. **Generating Encryption Key:**
+   ```python
+   key = Fernet.generate_key()
+   cipher_suite = Fernet(key)
+   ```
+   - An encryption key is generated using the `Fernet` class from the `cryptography` module.
+   - The key will be used for encrypting and decrypting passwords.
 
-Usage:
-- Run this script using Python.
-- Use the GUI to interact with the password manager application.
+4. **Creating Tkinter Window:**
+   ```python
+   root = Tk()
+   root.title("Password Manager")
+   root.geometry("500x400")
+   root.minsize(600, 400)
+   root.maxsize(600, 400)
+   ```
+   - A Tkinter `Tk` object is created, representing the main window of the application.
+   - Window title, initial geometry, and size constraints are set.
 
-Functions:
-1. submit(): Inserts a new password record into the database.
-2. query(): Retrieves and displays all records in the database.
-3. delete(): Deletes a record based on the provided ID.
-4. update(): Prepares an edit window for updating a record.
-5. change(): Updates a record with new information.
-6. hide(): Clears the displayed records.
+5. **Creating Tkinter Frame:**
+   ```python
+   frame = Frame(root, bg="#80c1ff", bd=5)
+   frame.place(relx=0.50, rely=0.50, relwidth=0.98, relheight=0.45, anchor="n")
+   ```
+   - A Tkinter `Frame` is created within the main window to organize and group UI elements.
+   - It has a background color (`#80c1ff`), border width (`bd`), and is placed using relative coordinates.
 
-Widgets:
-- Entry widgets: For entering data (Application Name, URL, Email, Password, ID for delete/update).
-- Buttons: For performing actions (Add Record, Show Records, Delete Record, Update Record).
+6. **Creating MySQL Table:**
+   ```python
+   cursor.execute("""CREATE TABLE IF NOT EXISTS manager (
+                          id INT AUTO_INCREMENT PRIMARY KEY,
+                          app_name VARCHAR(255),
+                          url VARCHAR(255),
+                          email_id VARCHAR(255),
+                          password VARBINARY(255)
+                       )
+   """)
+   ```
+   - A MySQL table named `manager` is created if it doesn't exist already.
+   - The table has columns for `id`, `app_name`, `url`, `email_id`, and `password`.
 
-Label:
-- Displays records in a specified area of the window.
+7. **Committing Database Changes:**
+   ```python
+   conn.commit()
+   ```
+   - Changes made to the database are committed.
 
-Main Function:
-- main(): Runs the Tkinter main loop to start the application.
+8. **Encryption and Decryption Functions:**
+   ```python
+   def encrypt_password(password):
+       return cipher_suite.encrypt(password.encode())
 
-Note:
-- Ensure that you have the required libraries (Tkinter, mysql.connector) installed.
-- Set up your MySQL database and update the database connection parameters.
-- For security reasons, this code does not encrypt or hash the stored passwords. In a real-world application, consider implementing password hashing for enhanced security.
+   def decrypt_password(encrypted_password):
+       try:
+           return cipher_suite.decrypt(encrypted_password).decode()
+       except Exception as e:
+           print(f"Error decrypting password: {e}")
+           return "Decryption Error"
+   ```
+   - Functions for encrypting and decrypting passwords using the generated key.
 
-"""
+9. **Submit Function:**
+   ```python
+   def submit():
+       # Insert into the MySQL table
+       if app_name.get() and url.get() and email_id.get() and password.get():
+           encrypted_password = encrypt_password(password.get())
+           insert_query = "INSERT INTO manager (app_name, url, email_id, password) VALUES (%s, %s, %s, %s)"
+           data = (app_name.get(), url.get(), email_id.get(), encrypted_password)
+           cursor.execute(insert_query, data)
+           conn.commit()
+           # Message box
+           messagebox.showinfo("Info", "Record Added in Database!")
 
+           # After data entry, clear the text boxes
+           app_name.delete(0, END)
+           url.delete(0, END)
+           email_id.delete(0, END)
+           password.delete(0, END)
+       else:
+           messagebox.showinfo("Alert", "Please fill all details!")
+   ```
+   - This function is called when the user clicks the "Add Record" button.
+   - It checks if all required fields are filled and then inserts the data into the `manager` table.
+   - After insertion, it displays a message box and clears the input fields.
+
+10. **Query Function:**
+    ```python
+    def query():
+        query_btn.configure(text="Hide Records", command=hide)
+        # Query the MySQL table
+        cursor.execute("SELECT * FROM manager")
+        records = cursor.fetchall()
+        p_records = ""
+        for record in records:
+            decrypted_password = decrypt_password(record[4])
+            p_records += f"{record[0]} {record[1]} {record[2]} {record[3]} {decrypted_password}\n"
+        query_label['text'] = p_records
+    ```
+    - This function is called when the user clicks the "Show Records" button.
+    - It queries all records from the `manager` table, decrypts passwords, and displays the records in the GUI.
+
+These explanations cover the first part of the code. If you would like more detailed explanations for the rest of the code, please let me know!
