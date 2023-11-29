@@ -2,54 +2,18 @@ from tkinter import *
 from cryptography.fernet import Fernet
 import mysql.connector
 from tkinter import messagebox
+from tkinter import font
+from tkinter import ttk
+import tkinter as tk
 
 # Create a MySQL connection
 conn = mysql.connector.connect(
     host="127.0.0.1",
     user="root",
-    password="Qwerty772",
+    password="Qwerty772", #Enter your own password
     database="PASSY"
 )
 cursor = conn.cursor()
-
-def generate_key():
-    """Generates a key and save it into a file
-    """
-    key = Fernet.generate_key()
-    with open("secret.key", "wb") as key_file:
-        key_file.write(key)
-generate_key()
-
-#Loading Key for Encryption
-def load_key():
-    return open("secret.key", "rb").read()
-load_key()
-Key = load_key()
-cipher_suite = Fernet(Key)
-
-update_id = Entry()
-root = Tk()
-root.title("PASSY V2")
-
-def update():
-    t = update_id.get()
-    if t:
-        global edit
-        edit = Tk()
-        edit.title("Update Record")
-        edit.geometry("640x500")
-        edit.minsize(450, 300)
-        edit.maxsize(1090,1080)
-
-        # Global variables
-        global app_name_edit, url_edit, email_id_edit, password_edit
-
-root.geometry("640x500")
-root.minsize(600, 400)
-root.maxsize(600, 400)
-
-frame = Frame(root, bg="#80c1ff", bd=5)
-frame.place(relx=0.50, rely=0.50, relwidth=0.98, relheight=0.45, anchor="n")
 
 # Create a MySQL table
 cursor.execute("""CREATE TABLE IF NOT EXISTS manager (
@@ -63,6 +27,60 @@ cursor.execute("""CREATE TABLE IF NOT EXISTS manager (
 
 # Commit changes
 conn.commit()
+
+
+#Generate key and store the key in seperate file
+def generate_key():
+    key_file_path = "secret.key"
+    
+    try:
+        key_file = open(key_file_path, "rb")
+        key = key_file.read()
+        key_file.close()
+        
+    except FileNotFoundError:
+        key = Fernet.generate_key()
+        key_file = open(key_file_path, "wb")
+        key_file.write(key)
+        key_file.close()
+    else:
+        print("Key file already exists. Skipping generation.")
+
+generate_key()
+
+#Loading Key for Encryption
+def load_key():
+    return open("secret.key", "rb").read()
+load_key()
+Key = load_key()
+cipher_suite = Fernet(Key)
+
+#GUI Base
+update_id = Entry()
+root = Tk()
+root.title("PASSY V2")
+root.geometry("495x660")
+root.minsize(495,660)
+root.maxsize(495,660)
+frame = Frame(root, bd=5)
+frame.place(relx=0.50, rely=0.50, relwidth=0.98, relheight=0.45, anchor="n")
+
+
+#Update Function
+def update():
+    t = update_id.get()
+    if t:
+        global edit
+        edit = Tk()
+        edit.title("Update Record")
+        edit.geometry("640x500")
+        edit.minsize(450, 300)
+        edit.maxsize(1090,1080)
+
+        # Global variables
+        global app_name_edit, url_edit, email_id_edit, password_edit
+
+
 
 # Encryption function
 def encrypt_password(password):
@@ -78,7 +96,6 @@ def decrypt_password(encrypted_password):
 
 # Create submit function for the database
 def submit():
-    # Insert into the MySQL table
     if app_name.get() and url.get() and email_id.get() and password.get():
         encrypted_password = encrypt_password(password.get())
         insert_query = "INSERT INTO manager (app_name, url, email_id, password) VALUES (%s, %s, %s, %s)"
@@ -89,7 +106,6 @@ def submit():
         messagebox.showinfo("Info","Record Added in PASSY!")
         query()
 
-        # After data entry, clear the text boxes
         app_name.delete(0, END)
         url.delete(0, END)
         email_id.delete(0, END)
@@ -190,54 +206,79 @@ def change():
 # Create a function to hide records
 def hide():
     query_label['text'] = ""
-    query_btn.configure(text="Show Records", command=query)
+    query_btn.configure(text="Show Records",command=query)
+    
 
-# Create text boxes
-app_name = Entry(root, width=30)
-app_name.grid(row=0, column=1, padx=20)
-url = Entry(root, width=30)
-url.grid(row=1, column=1, padx=20)
-email_id = Entry(root, width=30)
-email_id.grid(row=2, column=1, padx=20)
-password = Entry(root, width=30)
-password.grid(row=3, column=1, padx=20)
-delete_id = Entry(root, width=20)
-delete_id.grid(row=6, column=1, padx=20)
-update_id = Entry(root, width=20)
-update_id.grid(row=7, column=1, padx=20)
 
-# Create text box labels
-app_name_label = Label(root, text="Application Name:")
-app_name_label.grid(row=0, column=0)
-url_label = Label(root, text="URL:")
-url_label.grid(row=1, column=0)
-email_id_label = Label(root, text="Email Id:")
-email_id_label.grid(row=2, column=0)
-password_label = Label(root, text="Password:")
-password_label.grid(row=3, column=0)
+#GUI Main Window
 
-# Create submit button
-submit_btn = Button(root, text="Add Record", command=submit)
-submit_btn.grid(row=5, column=0, pady=5, padx=15, ipadx=35)
 
-# Create a query button
-query_btn = Button(root, text="Show Records", command=query)
-query_btn.grid(row=5, column=1, pady=5, padx=5, ipadx=35)
+#heading label
+label_font = font.Font(size=24)
+heading_label = Label(root, text="PASSY v2", font=label_font, bg="#2E3A4B", fg="#FFF", pady=10)
+heading_label.grid(row=0, column=0, columnspan=4, sticky="nsew")
 
-# Create a delete button
-delete_btn = Button(root, text="Delete Record", command=delete)
-delete_btn.grid(row=6, column=0, ipadx=30)
+#styled frame
+frame = ttk.Frame(root, padding="20")
+frame.grid(row=1, column=0, columnspan=4)
 
-# Create an update button
-update_btn = Button(root, text="Update Record", command=update)
-update_btn.grid(row=7, column=0, ipadx=30)
+#labels and entries
+app_name_label = ttk.Label(frame, text="Application Name:")
+app_name_label.grid(row=2, column=0, pady=10, padx=5, sticky="w")
 
-# Create a label to show responses
-query_label = Label(frame, anchor="nw", justify="left")
-query_label.place(relwidth=1, relheight=1)
+app_name = ttk.Entry(frame, width=20)
+app_name.grid(row=2, column=1, pady=10, padx=5, sticky="w")
+
+url_label = ttk.Label(frame, text="URL:")
+url_label.grid(row=3, column=0, pady=10, padx=5, sticky="w")
+
+url = ttk.Entry(frame, width=20)
+url.grid(row=3, column=1, pady=10, padx=5, sticky="w")
+
+delete_id_label = ttk.Label(frame, text="Delete Record by App Name:")
+delete_id_label.grid(row=8, column=0, pady=10, padx=5, sticky="w")
+
+update_id_label = ttk.Label(frame, text="Update Record by App Name:")
+update_id_label.grid(row=10, column=0, pady=10, padx=5, sticky="w")
+
+update_id = ttk.Entry(frame, width=20)
+update_id.grid(row=10, column=1, pady=10, padx=5, sticky="w")
+
+delete_id = ttk.Entry(frame, width=20)
+delete_id.grid(row=8, column=1, pady=10, padx=5, sticky="w")
+
+email_id_label = ttk.Label(frame, text="Email Id:")
+email_id_label.grid(row=4, column=0, pady=10, padx=5, sticky="w")
+
+email_id = ttk.Entry(frame, width=20)
+email_id.grid(row=4, column=1, pady=10, padx=5, sticky="w")
+
+password_label = ttk.Label(frame, text="Password:")
+password_label.grid(row=5, column=0, pady=10, padx=5, sticky="w")
+
+password = ttk.Entry(frame, width=20, show="*")
+password.grid(row=5, column=1, pady=10, padx=5, sticky="w")
+
+#buttons
+submit_btn = ttk.Button(frame, text="Add Record", command=submit, style="TButton")
+submit_btn.grid(row=6, column=0, pady=15, padx=5, sticky="e")
+
+query_btn = ttk.Button(frame, text="Show Records", command=query, style="TButton")
+query_btn.grid(row=6, column=1, pady=15, padx=5, sticky="w")
+
+delete_btn = ttk.Button(frame, text="Delete Record", command=delete, style="TButton")
+delete_btn.grid(row=9, column=0, pady=10, padx=5, sticky="w")
+
+update_btn = ttk.Button(frame, text="Update Record", command=update, style="TButton")
+update_btn.grid(row=11, column=0, pady=10, padx=5, sticky="w")
+
+query_label = tk.Label(frame, width=50, height=10, bg="#80c1ff", font=("Arial", 12))
+query_label.grid(row=13, column=0, columnspan=3, pady=(10, 0))
+
 
 def main():
     root.mainloop()
 
 if __name__ == '__main__':
-    root.mainloop()
+    main()
+    
