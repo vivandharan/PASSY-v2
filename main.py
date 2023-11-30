@@ -1,3 +1,9 @@
+                                                                #PROJECT PASSY-v2
+""" By V.KA.Vivan Dharan
+    Dhishaa Subramanian  """
+
+#Libraries for the Project
+
 from tkinter import *
 from cryptography.fernet import Fernet
 import mysql.connector
@@ -66,22 +72,6 @@ frame = Frame(root, bd=5)
 frame.place(relx=0.50, rely=0.50, relwidth=0.98, relheight=0.45, anchor="n")
 
 
-#Update Function
-def update():
-    t = update_id.get()
-    if t:
-        global edit
-        edit = Tk()
-        edit.title("Update Record")
-        edit.geometry("640x500")
-        edit.minsize(450, 300)
-        edit.maxsize(1090,1080)
-
-        # Global variables
-        global app_name_edit, url_edit, email_id_edit, password_edit
-
-
-
 # Encryption function
 def encrypt_password(password):
     return cipher_suite.encrypt(password.encode())
@@ -92,7 +82,7 @@ def decrypt_password(encrypted_password):
         return cipher_suite.decrypt(encrypted_password).decode()
     except Exception as e:
         print(f"Error decrypting password: {e}")
-        return "."
+        return "Key error, check secret key."
 
 # Create submit function for the database
 def submit():
@@ -145,7 +135,7 @@ def update():
     t = update_id.get()
     if t:
         global edit
-        edit = Tk()
+        edit = Toplevel(root)
         edit.title("Update Record")
         edit.geometry("500x400")
         edit.minsize(450, 300)
@@ -192,7 +182,7 @@ def update():
 # Create a function to save updated records
 def change():
     if app_name_edit.get() and url_edit.get() and email_id_edit.get() and password_edit.get():
-        encrypted_password = encrypt_password(password.get())
+        encrypted_password = encrypt_password(password_edit.get())
         update_query = "UPDATE manager SET app_name = %s, url = %s, email_id = %s, password = %s WHERE app_name = %s"
         data = (app_name_edit.get(), url_edit.get(), email_id_edit.get(), encrypted_password, update_id.get())
         cursor.execute(update_query, data)
@@ -259,6 +249,10 @@ password_label.grid(row=5, column=0, pady=10, padx=5, sticky="w")
 password = ttk.Entry(frame, width=20, show="*")
 password.grid(row=5, column=1, pady=10, padx=5, sticky="w")
 
+query_label = tk.Label(frame, width=50, height=10, bg="#80c1ff", font=("Arial", 12))
+query_label.grid(row=13, column=0, columnspan=3, pady=(10, 0))
+
+
 #buttons
 submit_btn = ttk.Button(frame, text="Add Record", command=submit, style="TButton")
 submit_btn.grid(row=6, column=0, pady=15, padx=5, sticky="e")
@@ -272,8 +266,6 @@ delete_btn.grid(row=9, column=0, pady=10, padx=5, sticky="w")
 update_btn = ttk.Button(frame, text="Update Record", command=update, style="TButton")
 update_btn.grid(row=11, column=0, pady=10, padx=5, sticky="w")
 
-query_label = tk.Label(frame, width=50, height=10, bg="#80c1ff", font=("Arial", 12))
-query_label.grid(row=13, column=0, columnspan=3, pady=(10, 0))
 
 
 def main():
